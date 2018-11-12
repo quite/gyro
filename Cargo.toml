@@ -5,3 +5,4 @@ authors = ["Daniel Lublin <daniel@lublin.se>"]
 
 [dependencies]
 irc = "0.13"
+chrono = "0.4"

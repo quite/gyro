@@ -1,5 +1,7 @@
+extern crate chrono;
 extern crate irc;
 
+use chrono::Local;
 use irc::client::prelude::*;
 use irc::error;
 
@@ -17,7 +19,10 @@ fn main() {
             }).and_then(|()| reactor.run());
         match result {
             Ok(_) => break,
-            Err(e) => eprintln!("{}", e),
+            Err(e) => {
+                let now = Local::now();
+                eprintln!("{} {}", now.format("%FT%T"), e);
+            }
         }
     }
 }
