@@ -6,10 +6,20 @@ use irc::error;
 fn main() {
     let config = Config::load("config.toml").unwrap();
     let mut reactor = IrcReactor::new().unwrap();
-    let client = reactor.prepare_client_and_connect(&config).unwrap();
-    client.identify().unwrap();
-    reactor.register_client_with_handler(client, process_msg);
-    reactor.run().unwrap();
+
+    loop {
+        let result = reactor
+            .prepare_client_and_connect(&config)
+            .and_then(|client| client.identify().and(Ok(client)))
+            .and_then(|client| {
+                reactor.register_client_with_handler(client, process_msg);
+                Ok(())
+            }).and_then(|()| reactor.run());
+        match result {
+            Ok(_) => break,
+            Err(e) => eprintln!("{}", e),
+        }
+    }
 }
 
 fn process_msg(client: &IrcClient, message: Message) -> error::Result<()> {
