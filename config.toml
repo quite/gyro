@@ -1,0 +1,9 @@
+server = "localhost"
+channels = ["#gyro"]
+nickname = "gyro"
+username = "gyro"
+realname = "Håll den som en gyro!"
+ping_time = 30
+ping_timeout = 10
+
+
