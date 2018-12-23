@@ -4,12 +4,12 @@ extern crate regex;
 extern crate reqwest;
 extern crate select;
 
+mod urlinfo;
+
 use chrono::Local;
 use irc::client::prelude::*;
 use irc::error;
 use regex::Regex;
-
-mod urlinfo;
 
 fn main() {
     let config = Config::load("config.toml").unwrap();
@@ -40,13 +40,9 @@ fn process_msg(client: &IrcClient, message: Message) -> error::Result<()> {
         Command::PRIVMSG(ref _targ, ref msg) => {
             let re = Regex::new(r"(https?://\S+)").unwrap();
             for cap in re.captures_iter(msg) {
-                println!("caught URL: {}", &cap[1]);
+                eprintln!("caught URL: {}", &cap[1]);
                 if let Some(t) = message.response_target() {
-                    let info = match urlinfo::urlinfo(&cap[1]) {
-                        Ok(txt) => format!("`{}`", txt),
-                        Err(txt) => txt.to_string(),
-                    };
-                    client.send_privmsg(t, info)?;
+                    client.send_privmsg(t, urlinfo::urlinfo(&cap[1]))?;
                 }
             }
         }

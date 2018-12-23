@@ -2,14 +2,14 @@ use reqwest::header::CONTENT_TYPE;
 use select::document::Document;
 use select::predicate::Name;
 
-pub fn urlinfo(url: &str) -> Result<String, String> {
+pub fn urlinfo(url: &str) -> String {
     let resp = match reqwest::get(url) {
         Ok(resp) => resp,
-        Err(e) => return Err(format!("reqwest::get(): {}", e)),
+        Err(e) => return format!("reqwest::get(): {}", e),
     };
 
     if !resp.status().is_success() {
-        return Err(format!("fail: {}", resp.status().to_string()));
+        return format!("fail: {}", resp.status().to_string());
     }
 
     let headers = resp.headers().clone();
@@ -25,15 +25,15 @@ pub fn urlinfo(url: &str) -> Result<String, String> {
                 .nth(0)
             {
                 Some(title) => match title.children().next() {
-                    Some(child) => Ok(child.text()),
-                    None => Err("[title tag is empty]".to_string()),
+                    Some(child) => format!("`{}`", child.text()),
+                    None => "[title tag is empty]".to_string(),
                 },
-                None => Err("[title tag is missing]".to_string()),
+                None => "[title tag is missing]".to_string(),
             }
         }
         // just content type
-        Some(i) => Err(i.to_string()),
-        None => Err("[content-type is missing]".to_string()),
+        Some(i) => i.to_string(),
+        None => "[content-type is missing]".to_string(),
     }
 }
 
