@@ -3,7 +3,10 @@ use select::document::Document;
 use select::predicate::Name;
 
 pub fn urlinfo(url: &str) -> String {
-    let resp = match reqwest::get(url) {
+    let client = reqwest::Client::builder()
+        .proxy(reqwest::Proxy::http("http://127.0.0.1:9080").unwrap())
+        .build();
+    let resp = match client.unwrap().get(url).send() {
         Ok(resp) => resp,
         Err(e) => return format!("reqwest::get(): {}", e),
     };
