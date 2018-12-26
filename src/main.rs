@@ -36,17 +36,14 @@ fn main() {
 
 fn process_msg(client: &IrcClient, message: Message) -> error::Result<()> {
     print!("{}", message);
-    match message.command {
-        Command::PRIVMSG(ref _targ, ref msg) => {
-            let re = Regex::new(r"(https?://\S+)").unwrap();
-            for cap in re.captures_iter(msg) {
-                eprintln!("caught URL: {}", &cap[1]);
-                if let Some(t) = message.response_target() {
-                    client.send_privmsg(t, urlinfo::urlinfo(&cap[1]))?;
-                }
+    if let Command::PRIVMSG(ref _targ, ref msg) = message.command {
+        let re = Regex::new(r"(https?://\S+)").unwrap();
+        for cap in re.captures_iter(msg) {
+            eprintln!("caught URL: {}", &cap[1]);
+            if let Some(t) = message.response_target() {
+                client.send_privmsg(t, urlinfo::urlinfo(&cap[1]))?;
             }
         }
-        _ => (),
     }
     Ok(())
 }
