@@ -28,7 +28,7 @@ pub fn urlinfo(url: &str) -> String {
                 .nth(0)
             {
                 Some(title) => match title.children().next() {
-                    Some(child) => format!("`{}`", child.text()),
+                    Some(child) => format!("`{}`", child.text().trim()),
                     None => "[title tag is empty]".to_string(),
                 },
                 None => "[title tag is missing]".to_string(),
