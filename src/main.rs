@@ -1,4 +1,5 @@
 extern crate chrono;
+extern crate hyper;
 extern crate irc;
 extern crate regex;
 extern crate reqwest;
