@@ -36,7 +36,6 @@ fn main() {
 }
 
 fn process_msg(client: &IrcClient, message: Message) -> error::Result<()> {
-    print!("{}", message);
     if let Command::PRIVMSG(ref _targ, ref msg) = message.command {
         let re = Regex::new(r"(https?://\S+)").unwrap();
         for cap in re.captures_iter(msg) {
