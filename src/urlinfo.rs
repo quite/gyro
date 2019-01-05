@@ -47,10 +47,7 @@ pub fn urlinfo(url: &str) -> String {
     let headers = resp.headers().clone();
 
     match headers.get(CONTENT_TYPE).and_then(|t| t.to_str().ok()) {
-        Some(i)
-            if i.contains("text/html")
-                || i.contains("application/xhtml+xml") =>
-        {
+        Some(i) if i.contains("text/html") || i.contains("application/xhtml+xml") => {
             match Document::from_read(resp)
                 .unwrap()
                 .find(Name("title"))

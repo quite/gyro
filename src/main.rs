@@ -23,8 +23,7 @@ fn main() {
             .and_then(|client| {
                 reactor.register_client_with_handler(client, process_msg);
                 Ok(())
-            })
-            .and_then(|()| reactor.run());
+            }).and_then(|()| reactor.run());
         match result {
             Ok(_) => break,
             Err(e) => {
