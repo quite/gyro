@@ -1,33 +1,23 @@
-use regex::Regex;
 use reqwest::header::CONTENT_TYPE;
 use select::document::Document;
 use select::predicate::Name;
-use std::error::Error as StdError;
 
 fn formaterr(e: reqwest::Error) -> String {
     if e.is_redirect() {
         return "[redirect loop]".to_string();
     }
 
-    if let Some(err) = e.get_ref().and_then(|e| e.downcast_ref::<hyper::Error>()) {
-        if err.is_connect() {
-            let re = r"1416F086.*unable to get local issuer cert";
-            if Regex::new(re)
-                .unwrap()
-                .is_match(&err.cause().unwrap().to_string())
-            {
-                return format!("[openssl:{}]", re);
-            }
-            // TODO: Wow, that was ugly! Should get hold of the
-            // openssl::error::Error to run code() or so on. A failed attempt
-            // follows, err is already a std::error::Error ?!
-            //
-            //     use openssl::error::Error as OpensslError;
-            //     if let Some(sslerr) = err.cause2().unwrap().downcast_ref::<OpensslError>() {
-            //         return format!("code:{}", sslerr.code());
-            //     }
+    // Boy, it's ugly
+    const ERRS: &[&str] = &[
+        "unable to get local issuer",
+        "certificate has expired"
+    ];
+    for err in ERRS.iter() {
+        if e.to_string().contains(err) {
+            return format!("cert error: {}", err);
         }
     }
+
     return format!("reqwest::get(): {}", e);
 }
 
