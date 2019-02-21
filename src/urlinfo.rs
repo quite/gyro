@@ -38,10 +38,12 @@ pub fn urlinfo(url: &str) -> String {
 
     match headers.get(CONTENT_TYPE).and_then(|t| t.to_str().ok()) {
         Some(i) if i.contains("text/html") || i.contains("application/xhtml+xml") => {
-            match Document::from_read(resp)
-                .unwrap()
-                .find(Name("title"))
-                .nth(0)
+            // we can get invalid utf-8 in stream, and more?
+            let doc = match Document::from_read(resp) {
+                Ok(doc) => doc,
+                Err(e) => return format!("[{}]", e),
+            };
+            match doc.find(Name("title")).nth(0)
             {
                 Some(title) => match title.children().next() {
                     Some(child) => format!("`{}`", child.text().trim()),
