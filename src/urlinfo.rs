@@ -2,8 +2,10 @@ use htmlescape::decode_html;
 use regex::Regex;
 use reqwest::header::CONTENT_TYPE;
 use std::io::Read;
+use std::time::Duration;
 
 const MAXBYTES: u64 = 30 * 1024;
+const TIMEOUTSECS: u64 = 8;
 
 fn get_title(contents: &str) -> Result<String, String> {
     let re = Regex::new("<(?i:title).*?>((.|\n)*?)</(?i:title)>").unwrap();
@@ -23,18 +25,24 @@ fn formaterr(e: reqwest::Error) -> String {
     }
 
     // Boy, it's ugly
-    const ERRS: &[&str] = &["unable to get local issuer", "certificate has expired"];
+    const ERRS: &[&str] = &[
+        "unable to get local issuer",
+        "certificate has expired",
+        "self signed certificate",
+        "Hostname mismatch",
+    ];
     for err in ERRS.iter() {
         if e.to_string().contains(err) {
-            return format!("cert error: {}", err);
+            return format!("[certificate error: {}]", err);
         }
     }
 
-    return format!("reqwest::get(): {}", e);
+    return format!("[{}]", e);
 }
 
 pub fn urlinfo(url: &str) -> String {
     let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(TIMEOUTSECS))
         .proxy(reqwest::Proxy::all("http://127.0.0.1:8118").unwrap())
         .build()
         .unwrap();
