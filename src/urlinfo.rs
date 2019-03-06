@@ -1,6 +1,21 @@
+use htmlescape::decode_html;
+use regex::Regex;
 use reqwest::header::CONTENT_TYPE;
-use select::document::Document;
-use select::predicate::Name;
+use std::io::Read;
+
+const MAXBYTES: u64 = 30 * 1024;
+
+fn get_title(contents: &str) -> Result<String, String> {
+    let re = Regex::new("<(?i:title).*?>((.|\n)*?)</(?i:title)>").unwrap();
+    let title = match re.captures(contents) {
+        Some(cap) => cap.get(1).unwrap().as_str(),
+        None => return Err("no title tag".to_string()),
+    };
+    match decode_html(title) {
+        Ok(decoded) => Ok(decoded.trim().to_string()),
+        Err(_) => Err("html entity error in title tag".to_string()),
+    }
+}
 
 fn formaterr(e: reqwest::Error) -> String {
     if e.is_redirect() {
@@ -8,10 +23,7 @@ fn formaterr(e: reqwest::Error) -> String {
     }
 
     // Boy, it's ugly
-    const ERRS: &[&str] = &[
-        "unable to get local issuer",
-        "certificate has expired"
-    ];
+    const ERRS: &[&str] = &["unable to get local issuer", "certificate has expired"];
     for err in ERRS.iter() {
         if e.to_string().contains(err) {
             return format!("cert error: {}", err);
@@ -23,9 +35,10 @@ fn formaterr(e: reqwest::Error) -> String {
 
 pub fn urlinfo(url: &str) -> String {
     let client = reqwest::Client::builder()
-        .proxy(reqwest::Proxy::http("http://127.0.0.1:9080").unwrap())
-        .build();
-    let resp = match client.unwrap().get(url).send() {
+        .proxy(reqwest::Proxy::all("http://127.0.0.1:8118").unwrap())
+        .build()
+        .unwrap();
+    let resp = match client.get(url).send() {
         Ok(resp) => resp,
         Err(e) => return formaterr(e),
     };
@@ -38,18 +51,14 @@ pub fn urlinfo(url: &str) -> String {
 
     match headers.get(CONTENT_TYPE).and_then(|t| t.to_str().ok()) {
         Some(i) if i.contains("text/html") || i.contains("application/xhtml+xml") => {
-            // we can get invalid utf-8 in stream, and more?
-            let doc = match Document::from_read(resp) {
-                Ok(doc) => doc,
-                Err(e) => return format!("[{}]", e),
-            };
-            match doc.find(Name("title")).nth(0)
-            {
-                Some(title) => match title.children().next() {
-                    Some(child) => format!("`{}`", child.text().trim()),
-                    None => "[title tag is empty]".to_string(),
-                },
-                None => "[title tag is missing]".to_string(),
+            let mut buf = Vec::new();
+            if resp.take(MAXBYTES).read_to_end(&mut buf).is_err() {
+                return "[read failed]".to_string();
+            }
+            let contents = String::from_utf8_lossy(&buf);
+            match get_title(&contents) {
+                Ok(title) => format!("`{}`", title),
+                Err(msg) => format!("[{}]", msg),
             }
         }
         // just content type

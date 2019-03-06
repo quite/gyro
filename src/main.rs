@@ -1,9 +1,9 @@
 extern crate chrono;
+extern crate htmlescape;
 extern crate hyper;
 extern crate irc;
 extern crate regex;
 extern crate reqwest;
-extern crate select;
 
 mod urlinfo;
 
