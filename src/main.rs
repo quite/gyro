@@ -23,7 +23,8 @@ fn main() {
             .and_then(|client| {
                 reactor.register_client_with_handler(client, process_msg);
                 Ok(())
-            }).and_then(|()| reactor.run());
+            })
+            .and_then(|()| reactor.run());
         match result {
             Ok(_) => break,
             Err(e) => {
@@ -36,7 +37,7 @@ fn main() {
 
 fn process_msg(client: &IrcClient, message: Message) -> error::Result<()> {
     if let Command::PRIVMSG(ref _targ, ref msg) = message.command {
-        let re = Regex::new(r"(https?://\S+)").unwrap();
+        let re = Regex::new(r"(https?://[^-]\S+)").unwrap();
         for cap in re.captures_iter(msg) {
             eprintln!("caught URL: {}", &cap[1]);
             if let Some(t) = message.response_target() {
