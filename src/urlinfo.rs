@@ -5,7 +5,7 @@ use std::io::Read;
 use std::time::Duration;
 
 const MAXBYTES: u64 = 30 * 1024;
-const TIMEOUTSECS: u64 = 8;
+const TIMEOUTSECS: u64 = 15;
 
 fn get_title(contents: &str) -> Result<String, String> {
     let re = Regex::new("<(?i:title).*?>((.|\n)*?)</(?i:title)>").unwrap();
