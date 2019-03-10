@@ -11,7 +11,7 @@ fn get_title(contents: &str) -> Result<String, String> {
     let re = Regex::new("<(?i:title).*?>((.|\n)*?)</(?i:title)>").unwrap();
     let title = match re.captures(contents) {
         Some(cap) => cap.get(1).unwrap().as_str(),
-        None => return Err("[no title tag]".to_string()),
+        None => return Err("no title tag".to_string()),
     };
     match decode_html(title) {
         Ok(decoded) => Ok(decoded.trim().to_string()),
