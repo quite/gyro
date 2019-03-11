@@ -20,7 +20,7 @@ fn has_option(config: &Config, option: &str) -> bool {
 }
 
 fn get_option<'a>(config: &'a Config, option: &str) -> &'a str {
-    return config.options.as_ref().unwrap().get(option).unwrap();
+    config.options.as_ref().unwrap().get(option).unwrap()
 }
 
 fn main() {
