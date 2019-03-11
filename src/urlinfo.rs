@@ -40,10 +40,10 @@ fn formaterr(e: reqwest::Error) -> String {
     return format!("[{}]", e);
 }
 
-pub fn urlinfo(url: &str) -> String {
+pub fn urlinfo(proxy: &str, url: &str) -> String {
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(TIMEOUTSECS))
-        .proxy(reqwest::Proxy::all("http://127.0.0.1:8118").unwrap())
+        .proxy(reqwest::Proxy::all(proxy).unwrap())
         .build()
         .unwrap();
     let resp = match client.get(url).send() {

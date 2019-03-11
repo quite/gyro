@@ -12,8 +12,25 @@ use irc::client::prelude::*;
 use irc::error;
 use regex::Regex;
 
+fn has_option(config: &Config, option: &str) -> bool {
+    match &config.options {
+        Some(options) if options.contains_key(option) => true,
+        _ => false,
+    }
+}
+
+fn get_option<'a>(config: &'a Config, option: &str) -> &'a str {
+    return config.options.as_ref().unwrap().get(option).unwrap();
+}
+
 fn main() {
     let config = Config::load("config.toml").unwrap();
+
+    if !has_option(&config, "proxy") {
+        eprintln!("Config is missing required proxy option");
+        std::process::exit(1);
+    };
+
     let mut reactor = IrcReactor::new().unwrap();
 
     loop {
@@ -40,8 +57,11 @@ fn process_msg(client: &IrcClient, message: Message) -> error::Result<()> {
         let re = Regex::new(r"(https?://[^-]\S+)").unwrap();
         for cap in re.captures_iter(msg) {
             eprintln!("caught URL: {}", &cap[1]);
-            if let Some(t) = message.response_target() {
-                client.send_privmsg(t, urlinfo::urlinfo(&cap[1]))?;
+            if let Some(target) = message.response_target() {
+                client.send_privmsg(
+                    target,
+                    urlinfo::urlinfo(get_option(client.config(), "proxy"), &cap[1]),
+                )?;
             }
         }
     }
