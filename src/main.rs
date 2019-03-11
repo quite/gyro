@@ -31,6 +31,20 @@ fn main() {
         std::process::exit(1);
     };
 
+    eprintln!(
+        "I'm {}! server:{}:{}({}) channels:{} webproxy:{}",
+        config.nickname.as_ref().unwrap(),
+        config.server.as_ref().unwrap(),
+        config.port.as_ref().unwrap(),
+        if config.use_ssl.unwrap() {
+            "using ssl"
+        } else {
+            "no ssl"
+        },
+        config.channels.as_ref().unwrap().join(","),
+        get_option(&config, "proxy")
+    );
+
     let mut reactor = IrcReactor::new().unwrap();
 
     loop {
