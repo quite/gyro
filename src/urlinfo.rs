@@ -1,11 +1,11 @@
 use htmlescape::decode_html;
 use regex::Regex;
 use reqwest::header::CONTENT_TYPE;
+use std::collections::HashMap;
 use std::io::Read;
 use std::time::Duration;
 
 const MAXBYTES: u64 = 30 * 1024;
-const TIMEOUTSECS: u64 = 15;
 
 fn get_title(contents: &str) -> Result<String, String> {
     let re = Regex::new("<(?i:title).*?>((.|\n)*?)</(?i:title)>").unwrap();
@@ -40,10 +40,12 @@ fn formaterr(e: reqwest::Error) -> String {
     return format!("[{}]", e);
 }
 
-pub fn urlinfo(proxy: &str, url: &str) -> String {
+pub fn urlinfo(options: &HashMap<String, String>, url: &str) -> String {
     let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(TIMEOUTSECS))
-        .proxy(reqwest::Proxy::all(proxy).unwrap())
+        .timeout(Duration::from_secs(
+            options.get("timeout").unwrap().parse().unwrap(),
+        ))
+        .proxy(reqwest::Proxy::all(options.get("proxy").unwrap()).unwrap())
         .build()
         .unwrap();
     let resp = match client.get(url).send() {

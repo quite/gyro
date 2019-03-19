@@ -9,3 +9,5 @@ ping_timeout = 10
 [options]
 # required, for accessing http/https (we currently use privoxy in front of Tor)
 proxy = "http://127.0.0.1:8118"
+# http timeout (default is 15)
+#timeout = 30

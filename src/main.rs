@@ -19,16 +19,23 @@ fn has_option(config: &Config, option: &str) -> bool {
     }
 }
 
+const DEFAULT_TIMEOUT: &str = "15";
+
 fn main() {
-    let config = Config::load("config.toml").unwrap();
+    let mut config = Config::load("config.toml").unwrap();
 
     if !has_option(&config, "proxy") {
         eprintln!("Config is missing required proxy option");
         std::process::exit(1);
     };
 
+    if !has_option(&config, "timeout") {
+        let options = config.options.as_mut().unwrap();
+        options.insert("timeout".to_string(), DEFAULT_TIMEOUT.to_string());
+    };
+
     eprintln!(
-        "I'm {}! server:{}:{}({}) channels:{} webproxy:{}",
+        "I'm {}! server:{}:{}({}) channels:{} proxy:{} timeout:{}",
         config.nickname.as_ref().unwrap(),
         config.server.as_ref().unwrap(),
         config.port.as_ref().unwrap(),
@@ -38,7 +45,8 @@ fn main() {
             "no ssl"
         },
         config.channels.as_ref().unwrap().join(","),
-        config.get_option("proxy").unwrap()
+        config.get_option("proxy").unwrap(),
+        config.get_option("timeout").unwrap()
     );
 
     let mut reactor = IrcReactor::new().unwrap();
@@ -70,7 +78,7 @@ fn process_msg(client: &IrcClient, message: Message) -> error::Result<()> {
             if let Some(target) = message.response_target() {
                 client.send_privmsg(
                     target,
-                    urlinfo::urlinfo(client.config().get_option("proxy").unwrap(), &cap[1]),
+                    urlinfo::urlinfo(client.config().options.as_ref().unwrap(), &cap[1]),
                 )?;
             }
         }
