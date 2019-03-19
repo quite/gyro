@@ -19,10 +19,6 @@ fn has_option(config: &Config, option: &str) -> bool {
     }
 }
 
-fn get_option<'a>(config: &'a Config, option: &str) -> &'a str {
-    config.options.as_ref().unwrap().get(option).unwrap()
-}
-
 fn main() {
     let config = Config::load("config.toml").unwrap();
 
@@ -42,7 +38,7 @@ fn main() {
             "no ssl"
         },
         config.channels.as_ref().unwrap().join(","),
-        get_option(&config, "proxy")
+        config.get_option("proxy").unwrap()
     );
 
     let mut reactor = IrcReactor::new().unwrap();
@@ -74,7 +70,7 @@ fn process_msg(client: &IrcClient, message: Message) -> error::Result<()> {
             if let Some(target) = message.response_target() {
                 client.send_privmsg(
                     target,
-                    urlinfo::urlinfo(get_option(client.config(), "proxy"), &cap[1]),
+                    urlinfo::urlinfo(client.config().get_option("proxy").unwrap(), &cap[1]),
                 )?;
             }
         }
