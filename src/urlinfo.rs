@@ -27,10 +27,7 @@ fn get_title(resp: reqwest::Response) -> Result<String, String> {
                 return Err("read failed".to_string());
             }
             let contents = String::from_utf8_lossy(&buf);
-            match extract_html_title(&contents) {
-                Ok(title) => Ok(title),
-                Err(msg) => Err(msg),
-            }
+            extract_html_title(&contents)
         }
         // just content type
         Some(i) => Err(i.to_string()),
@@ -50,11 +47,10 @@ fn get_wp_extract(resp: reqwest::Response) -> Result<String, String> {
         Err(e) => return Err(format!("wikipedia api err: {}", e.to_string())),
     };
 
-    let extract = match &v["extract"] {
-        serde_json::Value::String(s) => format!("{}: ", s),
-        _ => return Err(format!("wikipedia json: no extract")),
-    };
-    Ok(extract)
+    match &v["extract"] {
+        serde_json::Value::String(extract) => Ok(extract.to_string()),
+        _ => Err("wikipedia json: no extract".to_string()),
+    }
 }
 
 fn formaterr(e: reqwest::Error) -> String {
