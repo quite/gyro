@@ -71,6 +71,17 @@ fn main() {
     }
 }
 
+const MAXINFOLEN: usize = 250;
+
+fn truncate(s: &str) -> String {
+    let dots = if s.chars().count() > MAXINFOLEN {
+        "…"
+    } else {
+        ""
+    };
+    format!("{:.len$}{}", s, dots, len = MAXINFOLEN)
+}
+
 fn process_msg(client: &IrcClient, message: Message) -> error::Result<()> {
     if let Command::PRIVMSG(ref _targ, ref msg) = message.command {
         let re = Regex::new(r"(https?://[^-]\S+)").unwrap();
@@ -79,8 +90,8 @@ fn process_msg(client: &IrcClient, message: Message) -> error::Result<()> {
             if let Some(target) = message.response_target() {
                 let out = match urlinfo::urlinfo(client.config().options.as_ref().unwrap(), &cap[1])
                 {
-                    Ok(s) => s,
-                    Err(s) => format!("[{}]", s),
+                    Ok(s) => format!("`{}`", truncate(&s)),
+                    Err(s) => format!("[{}]", truncate(&s)),
                 };
                 client.send_privmsg(target, out)?;
             }

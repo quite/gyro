@@ -5,17 +5,6 @@ use std::collections::HashMap;
 use std::io::Read;
 use std::time::Duration;
 
-const MAXINFOLEN: usize = 250;
-
-fn truncate(s: &str) -> String {
-    let dots = if s.chars().count() > MAXINFOLEN {
-        "…"
-    } else {
-        ""
-    };
-    format!("{:.len$}{}", s, dots, len = MAXINFOLEN)
-}
-
 fn extract_html_title(contents: &str) -> Result<String, String> {
     let re = Regex::new("<(?i:title).*?>((.|\n)*?)</(?i:title)>").unwrap();
     let title = match re.captures(contents) {
@@ -39,12 +28,12 @@ fn get_title(resp: reqwest::Response) -> Result<String, String> {
             }
             let contents = String::from_utf8_lossy(&buf);
             match extract_html_title(&contents) {
-                Ok(title) => Ok(format!("`{}`", truncate(&title))),
+                Ok(title) => Ok(title),
                 Err(msg) => Err(msg),
             }
         }
         // just content type
-        Some(i) => Ok(i.to_string()),
+        Some(i) => Err(i.to_string()),
         None => Err("no content-type".to_string()),
     }
 }
@@ -65,7 +54,7 @@ fn get_wp_extract(resp: reqwest::Response) -> Result<String, String> {
         serde_json::Value::String(s) => format!("{}: ", s),
         _ => return Err(format!("wikipedia json: no extract")),
     };
-    Ok(format!("`{}`", truncate(&extract)))
+    Ok(extract)
 }
 
 fn formaterr(e: reqwest::Error) -> String {
