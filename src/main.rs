@@ -4,6 +4,7 @@ extern crate hyper;
 extern crate irc;
 extern crate regex;
 extern crate reqwest;
+extern crate serde_json;
 
 mod urlinfo;
 

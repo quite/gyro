@@ -329,6 +329,7 @@ dependencies = [
  "irc 0.13.6 (git+https://github.com/quite/irc?branch=insecure)",
  "regex 1.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "reqwest 0.9.11 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.39 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

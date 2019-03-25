@@ -5,7 +5,16 @@ use std::collections::HashMap;
 use std::io::Read;
 use std::time::Duration;
 
-const MAXBYTES: u64 = 30 * 1024;
+const MAXINFOLEN: usize = 250;
+
+fn truncate(s: &str) -> String {
+    let dots = if s.chars().count() > MAXINFOLEN {
+        "…"
+    } else {
+        ""
+    };
+    format!("{:.len$}{}", s, dots, len = MAXINFOLEN)
+}
 
 fn extract_html_title(contents: &str) -> Result<String, String> {
     let re = Regex::new("<(?i:title).*?>((.|\n)*?)</(?i:title)>").unwrap();
@@ -25,12 +34,12 @@ fn get_title(resp: reqwest::Response) -> Result<String, String> {
     match headers.get(CONTENT_TYPE).and_then(|t| t.to_str().ok()) {
         Some(i) if i.contains("text/html") || i.contains("application/xhtml+xml") => {
             let mut buf = Vec::new();
-            if resp.take(MAXBYTES).read_to_end(&mut buf).is_err() {
+            if resp.take(10 * 1024).read_to_end(&mut buf).is_err() {
                 return Err("read failed".to_string());
             }
             let contents = String::from_utf8_lossy(&buf);
             match extract_html_title(&contents) {
-                Ok(title) => Ok(format!("`{}`", title)),
+                Ok(title) => Ok(format!("`{}`", truncate(&title))),
                 Err(msg) => Err(msg),
             }
         }
@@ -38,6 +47,25 @@ fn get_title(resp: reqwest::Response) -> Result<String, String> {
         Some(i) => Ok(i.to_string()),
         None => Err("no content-type".to_string()),
     }
+}
+
+fn get_wp_extract(resp: reqwest::Response) -> Result<String, String> {
+    let mut buf = Vec::new();
+    if resp.take(10 * 1024).read_to_end(&mut buf).is_err() {
+        return Err("read failed".to_string());
+    }
+    let contents = String::from_utf8_lossy(&buf);
+
+    let v: serde_json::Value = match serde_json::from_str(&contents) {
+        Ok(v) => v,
+        Err(e) => return Err(format!("wikipedia api err: {}", e.to_string())),
+    };
+
+    let extract = match &v["extract"] {
+        serde_json::Value::String(s) => format!("{}: ", s),
+        _ => return Err(format!("wikipedia json: no extract")),
+    };
+    Ok(format!("`{}`", truncate(&extract)))
 }
 
 fn formaterr(e: reqwest::Error) -> String {
@@ -83,6 +111,15 @@ fn fetch(options: &HashMap<String, String>, url: &str) -> Result<reqwest::Respon
 }
 
 pub fn urlinfo(options: &HashMap<String, String>, url: &str) -> Result<String, String> {
+    let re = Regex::new(r"^https?://([-a-z]+\.(?:m\.)?wikipedia\.org)/wiki/(.*)").unwrap();
+    if let Some(cap) = re.captures(url) {
+        let url = format!(
+            "https://{}/api/rest_v1/page/summary/{}",
+            cap.get(1).unwrap().as_str(),
+            cap.get(2).unwrap().as_str(),
+        );
+        return get_wp_extract(fetch(options, &url)?);
+    };
     get_title(fetch(options, url)?)
 }
 
