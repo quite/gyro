@@ -7,7 +7,7 @@ use std::time::Duration;
 
 const MAXBYTES: u64 = 30 * 1024;
 
-fn get_title(contents: &str) -> Result<String, String> {
+fn extract_html_title(contents: &str) -> Result<String, String> {
     let re = Regex::new("<(?i:title).*?>((.|\n)*?)</(?i:title)>").unwrap();
     let title = match re.captures(contents) {
         Some(cap) => cap.get(1).unwrap().as_str(),
@@ -19,9 +19,30 @@ fn get_title(contents: &str) -> Result<String, String> {
     }
 }
 
+fn get_title(resp: reqwest::Response) -> Result<String, String> {
+    let headers = resp.headers().clone();
+
+    match headers.get(CONTENT_TYPE).and_then(|t| t.to_str().ok()) {
+        Some(i) if i.contains("text/html") || i.contains("application/xhtml+xml") => {
+            let mut buf = Vec::new();
+            if resp.take(MAXBYTES).read_to_end(&mut buf).is_err() {
+                return Err("read failed".to_string());
+            }
+            let contents = String::from_utf8_lossy(&buf);
+            match extract_html_title(&contents) {
+                Ok(title) => Ok(format!("`{}`", title)),
+                Err(msg) => Err(msg),
+            }
+        }
+        // just content type
+        Some(i) => Ok(i.to_string()),
+        None => Err("no content-type".to_string()),
+    }
+}
+
 fn formaterr(e: reqwest::Error) -> String {
     if e.is_redirect() {
-        return "[redirect loop]".to_string();
+        return "redirect loop".to_string();
     }
 
     // Boy, it's ugly
@@ -33,14 +54,14 @@ fn formaterr(e: reqwest::Error) -> String {
     ];
     for err in ERRS.iter() {
         if e.to_string().contains(err) {
-            return format!("[certificate error: {}]", err);
+            return format!("certificate error: {}", err);
         }
     }
 
-    return format!("[{}]", e);
+    return format!("{}", e);
 }
 
-pub fn urlinfo(options: &HashMap<String, String>, url: &str) -> String {
+fn fetch(options: &HashMap<String, String>, url: &str) -> Result<reqwest::Response, String> {
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(
             options.get("timeout").unwrap().parse().unwrap(),
@@ -48,33 +69,21 @@ pub fn urlinfo(options: &HashMap<String, String>, url: &str) -> String {
         .proxy(reqwest::Proxy::all(options.get("proxy").unwrap()).unwrap())
         .build()
         .unwrap();
+
     let resp = match client.get(url).send() {
         Ok(resp) => resp,
-        Err(e) => return formaterr(e),
+        Err(e) => return Err(formaterr(e)),
     };
 
     if !resp.status().is_success() {
-        return format!("[http error: {}]", resp.status().to_string());
+        return Err(format!("http error: {}", resp.status()));
     }
 
-    let headers = resp.headers().clone();
+    Ok(resp)
+}
 
-    match headers.get(CONTENT_TYPE).and_then(|t| t.to_str().ok()) {
-        Some(i) if i.contains("text/html") || i.contains("application/xhtml+xml") => {
-            let mut buf = Vec::new();
-            if resp.take(MAXBYTES).read_to_end(&mut buf).is_err() {
-                return "[read failed]".to_string();
-            }
-            let contents = String::from_utf8_lossy(&buf);
-            match get_title(&contents) {
-                Ok(title) => format!("`{}`", title),
-                Err(msg) => format!("[{}]", msg),
-            }
-        }
-        // just content type
-        Some(i) => i.to_string(),
-        None => "[no content-type]".to_string(),
-    }
+pub fn urlinfo(options: &HashMap<String, String>, url: &str) -> Result<String, String> {
+    get_title(fetch(options, url)?)
 }
 
 #[cfg(test)]

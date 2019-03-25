@@ -76,10 +76,12 @@ fn process_msg(client: &IrcClient, message: Message) -> error::Result<()> {
         for cap in re.captures_iter(msg) {
             eprintln!("caught URL: {}", &cap[1]);
             if let Some(target) = message.response_target() {
-                client.send_privmsg(
-                    target,
-                    urlinfo::urlinfo(client.config().options.as_ref().unwrap(), &cap[1]),
-                )?;
+                let out = match urlinfo::urlinfo(client.config().options.as_ref().unwrap(), &cap[1])
+                {
+                    Ok(s) => s,
+                    Err(s) => format!("[{}]", s),
+                };
+                client.send_privmsg(target, out)?;
             }
         }
     }
