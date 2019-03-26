@@ -36,7 +36,7 @@ fn main() {
     };
 
     eprintln!(
-        "I'm gyro {}!\n  nick:{} server:{}:{}({}) channels:{}\n  proxy:{} timeout:{}",
+        "I'm gyro {}! nick:{} server:{}:{}({}) channels:{} proxy:{} timeout:{}",
         env!("VERSION"),
         config.nickname.as_ref().unwrap(),
         config.server.as_ref().unwrap(),
