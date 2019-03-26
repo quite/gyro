@@ -1,6 +1,6 @@
 [package]
 name = "gyro"
-version = "0.1.1"
+version = "0.1.4"
 authors = ["Daniel Lublin <daniel@lublin.se>"]
 
 [dependencies]
@@ -14,3 +14,6 @@ serde_json = "1.0.39"
 
 [patch.crates-io]
 'irc' = { git = "https://github.com/quite/irc", branch = "insecure" }
+
+[build-dependencies]
+git-version = "0.2.1"
