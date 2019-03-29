@@ -12,7 +12,7 @@ fn extract_html_title(contents: &str) -> Result<String, String> {
         None => return Err("no title tag".to_string()),
     };
     match decode_html(title) {
-        Ok(decoded) => Ok(decoded.trim().to_string()),
+        Ok(decoded) => Ok(decoded.trim().replace("\n", " ")),
         Err(_) => Err("html entity error in title tag".to_string()),
     }
 }
@@ -48,7 +48,7 @@ fn get_wp_extract(resp: reqwest::Response) -> Result<String, String> {
     };
 
     match &v["extract"] {
-        serde_json::Value::String(extract) => Ok(extract.to_string()),
+        serde_json::Value::String(extract) => Ok(extract.replace("\n", ", ")),
         _ => Err("wikipedia json: no extract".to_string()),
     }
 }
