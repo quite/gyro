@@ -113,10 +113,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_urlinfo() {
+    fn test_extract_html_title() {
         assert_eq!(
-            Some(String::from("Welcome to nginx!")),
-            urlinfo("http://localhost")
+            Ok("bar".to_string()),
+            extract_html_title("foo<title>bar</title>baz")
+        );
+        assert_eq!(
+            Ok("bar baz".to_string()),
+            extract_html_title("foo<title>bar\nbaz</title>blubb")
         );
     }
 }
