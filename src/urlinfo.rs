@@ -1,4 +1,5 @@
 use htmlescape::decode_html;
+use hyper::rt::Future;
 use regex::Regex;
 use reqwest::header::CONTENT_TYPE;
 use std::collections::HashMap;
@@ -17,7 +18,7 @@ fn extract_html_title(contents: &str) -> Result<String, String> {
     }
 }
 
-fn get_title(resp: reqwest::Response) -> Result<String, String> {
+fn get_title(resp: reqwest::async::Response) -> Result<String, String> {
     let headers = resp.headers().clone();
 
     match headers.get(CONTENT_TYPE).and_then(|t| t.to_str().ok()) {
@@ -35,7 +36,7 @@ fn get_title(resp: reqwest::Response) -> Result<String, String> {
     }
 }
 
-fn get_wp_extract(resp: reqwest::Response) -> Result<String, String> {
+fn get_wp_extract(resp: reqwest::async::Response) -> Result<String, String> {
     let mut buf = Vec::new();
     if resp.take(10 * 1024).read_to_end(&mut buf).is_err() {
         return Err("read failed".to_string());
@@ -53,7 +54,7 @@ fn get_wp_extract(resp: reqwest::Response) -> Result<String, String> {
     }
 }
 
-fn formaterr(e: reqwest::Error) -> String {
+fn formaterr(e: &reqwest::Error) -> String {
     if e.is_redirect() {
         return "redirect loop".to_string();
     }
@@ -74,8 +75,8 @@ fn formaterr(e: reqwest::Error) -> String {
     return format!("{}", e);
 }
 
-fn fetch(options: &HashMap<String, String>, url: &str) -> Result<reqwest::Response, String> {
-    let client = reqwest::Client::builder()
+fn fetch(options: &HashMap<String, String>, url: &str) -> Result<reqwest::async::Response, String> {
+    let client = reqwest::async::Client::builder()
         .timeout(Duration::from_secs(
             options.get("timeout").unwrap().parse().unwrap(),
         ))
@@ -83,14 +84,17 @@ fn fetch(options: &HashMap<String, String>, url: &str) -> Result<reqwest::Respon
         .build()
         .unwrap();
 
-    let resp = match client.get(url).send() {
+    let resp = client.get(url).send();
+
+    let mut rt = tokio::runtime::current_thread::Runtime::new().expect("new rt");
+    let resp = match rt.block_on(resp) {
         Ok(resp) => resp,
-        Err(e) => return Err(formaterr(e)),
+        Err(e) => return Err(formaterr(&e)),
     };
 
-    if !resp.status().is_success() {
-        return Err(format!("http error: {}", resp.status()));
-    }
+    // if !resp.status().is_success() {
+    //     return Err(format!("http error: {}", resp.status()));
+    // }
 
     Ok(resp)
 }

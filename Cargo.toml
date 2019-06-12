@@ -11,6 +11,7 @@ regex = "1.1.0"
 hyper = "0.12.19"
 htmlescape = "0.3.1"
 serde_json = "1.0.39"
+tokio = "0.1.21"
 
 [patch.crates-io]
 'irc' = { git = "https://github.com/quite/irc", branch = "insecure" }
