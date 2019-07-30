@@ -5,12 +5,12 @@ authors = ["Daniel Lublin <daniel@lublin.se>"]
 
 [dependencies]
 irc = "0.13.6"
-chrono = "0.4.6"
-reqwest = "0.9.5"
-regex = "1.1.0"
-hyper = "0.12.19"
+chrono = "0.4.7"
+reqwest = "= 0.9.17"
+regex = "1.2.0"
+hyper = "0.12.33"
 htmlescape = "0.3.1"
-serde_json = "1.0.39"
+serde_json = "1.0.40"
 git-version = "0.3.1"
 
 [patch.crates-io]
