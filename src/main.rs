@@ -1,4 +1,5 @@
 extern crate chrono;
+extern crate git_version;
 extern crate htmlescape;
 extern crate hyper;
 extern crate irc;
@@ -12,6 +13,9 @@ use chrono::Local;
 use irc::client::prelude::*;
 use irc::error;
 use regex::Regex;
+
+use git_version::git_version;
+const GIT_VERSION: &str = git_version!();
 
 fn has_option(config: &Config, option: &str) -> bool {
     match &config.options {
@@ -37,7 +41,7 @@ fn main() {
 
     eprintln!(
         "I'm gyro {}! nick:{} server:{}:{}({}) channels:{} proxy:{} timeout:{}",
-        env!("VERSION"),
+        GIT_VERSION,
         config.nickname.as_ref().unwrap(),
         config.server.as_ref().unwrap(),
         config.port.as_ref().unwrap(),
