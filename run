@@ -1,0 +1,13 @@
+#!/bin/bash
+set -euo pipefail
+
+cd "${0%/*}" || exit 1
+
+if docker >&/dev/null top gyro; then
+  echo already running
+  exit 0
+fi
+
+docker run --name=gyro -d --restart=always \
+  --mount type=bind,source="$(pwd)"/config.toml,target=/config.toml,readonly \
+  gyro:latest
