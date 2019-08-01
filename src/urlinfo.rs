@@ -5,11 +5,13 @@ use std::collections::HashMap;
 use std::io::Read;
 use std::time::Duration;
 
+const MAX_TITLE_TAKE: u64 = 15 * 1024;
+
 fn extract_html_title(contents: &str) -> Result<String, String> {
     let re = Regex::new("<(?i:title).*?>((.|\n)*?)</(?i:title)>").unwrap();
     let title = match re.captures(contents) {
         Some(cap) => cap.get(1).unwrap().as_str(),
-        None => return Err("no title tag".to_string()),
+        None => return Err(format!("no title tag ({} KiB read)", MAX_TITLE_TAKE / 1024)),
     };
     match decode_html(title) {
         Ok(decoded) => Ok(decoded.trim().replace("\n", " ")),
@@ -23,7 +25,7 @@ fn get_title(resp: reqwest::Response) -> Result<String, String> {
     match headers.get(CONTENT_TYPE).and_then(|t| t.to_str().ok()) {
         Some(i) if i.contains("text/html") || i.contains("application/xhtml+xml") => {
             let mut buf = Vec::new();
-            if resp.take(10 * 1024).read_to_end(&mut buf).is_err() {
+            if resp.take(MAX_TITLE_TAKE).read_to_end(&mut buf).is_err() {
                 return Err("read failed".to_string());
             }
             let contents = String::from_utf8_lossy(&buf);
