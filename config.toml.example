@@ -7,7 +7,10 @@ ping_time = 30
 ping_timeout = 10
 
 [options]
-# required, for accessing http/https over Tor
+# a proxy is required. access http/https over Tor:
 proxy = "socks5://127.0.0.1:9050"
+# you can also use some regular http proxy
+#proxy = "http://127.0.0.1:8118"
+
 # http timeout (default is 15)
 #timeout = 30
