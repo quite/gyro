@@ -6,7 +6,7 @@ authors = ["Daniel Lublin <daniel@lublin.se>"]
 [dependencies]
 irc = "0.13.6"
 chrono = "0.4.7"
-reqwest = "= 0.9.17"
+reqwest = { version = "0.9.22", features = ["socks"] }
 regex = "1.2.0"
 hyper = "0.12.33"
 htmlescape = "0.3.1"
