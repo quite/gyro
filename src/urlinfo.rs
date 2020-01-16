@@ -1,5 +1,7 @@
 use htmlescape::decode_html;
 use regex::Regex;
+use reqwest::blocking::Client;
+use reqwest::blocking::Response;
 use reqwest::header::CONTENT_TYPE;
 use std::collections::HashMap;
 use std::io::Read;
@@ -19,7 +21,7 @@ fn extract_html_title(contents: &str) -> Result<String, String> {
     }
 }
 
-fn get_title(resp: reqwest::Response) -> Result<String, String> {
+fn get_title(resp: Response) -> Result<String, String> {
     let headers = resp.headers().clone();
 
     match headers.get(CONTENT_TYPE).and_then(|t| t.to_str().ok()) {
@@ -37,7 +39,7 @@ fn get_title(resp: reqwest::Response) -> Result<String, String> {
     }
 }
 
-fn get_wp_extract(resp: reqwest::Response) -> Result<String, String> {
+fn get_wp_extract(resp: Response) -> Result<String, String> {
     let mut buf = Vec::new();
     if resp.take(10 * 1024).read_to_end(&mut buf).is_err() {
         return Err("read failed".to_string());
@@ -76,8 +78,8 @@ fn formaterr(e: reqwest::Error) -> String {
     return format!("{}", e);
 }
 
-fn fetch(options: &HashMap<String, String>, url: &str) -> Result<reqwest::Response, String> {
-    let client = reqwest::Client::builder()
+fn fetch(options: &HashMap<String, String>, url: &str) -> Result<Response, String> {
+    let client = Client::builder()
         .timeout(Duration::from_secs(
             options.get("timeout").unwrap().parse().unwrap(),
         ))
