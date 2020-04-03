@@ -8,7 +8,8 @@ ping_timeout = 10
 
 [options]
 # a proxy is required. access http/https over Tor:
-proxy = "socks5://127.0.0.1:9050"
+# (the `h` in socks5h means let the proxy do DNS resolution, .onion works!)
+proxy = "socks5h://127.0.0.1:9050"
 # you can also use some regular http proxy
 #proxy = "http://127.0.0.1:8118"
 
