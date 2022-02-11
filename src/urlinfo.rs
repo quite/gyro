@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::io::Read;
 use std::time::Duration;
 
-const MAX_TITLE_TAKE: u64 = 15 * 1024;
+const MAX_TITLE_TAKE: u64 = 100 * 1024;
 
 fn extract_html_title(contents: &str) -> Result<String, String> {
     let re = Regex::new("<(?i:title).*?>((.|\n)*?)</(?i:title)>").unwrap();
